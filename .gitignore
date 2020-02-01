@@ -2,9 +2,15 @@
 __pycache__/
 *.py[cod]
 *$py.class
+launch.json
+settings.json
 
 # C extensions
 *.so
+
+# GCP credentials and tests
+cred/*
+*.txt
 
 # Distribution / packaging
 .Python
