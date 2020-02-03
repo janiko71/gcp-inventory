@@ -7,6 +7,7 @@ https://cloud.google.com/python/setup?hl=fr
 
 ```pip install google-cloud-asset``` (en bêta)
 ```pip install google-api-python-client```
+```pip install google-api-helper```
 
 ```gcloud components install app-engine-python```
 
@@ -14,11 +15,16 @@ See documentatoion on https://pypi.org/project/google-cloud-asset/
 
 Else you'll have to install all needed packages ```pip install google-cloud-storage``` ??
 
+All APIs must be enabled for the services you want information on. And the service account needs to have all the needed authorizations (viewer on services you are inventoring).
+
 ### Homepage and API docs
 
 https://github.com/googleapis/google-cloud-python
 
 https://googleapis.dev/python/cloudasset/latest/index.html
+
+## Pagination
+https://github.com/googleapis/google-api-python-client/blob/master/docs/pagination.md
 
 ## Authentication
 https://googleapis.dev/python/google-api-core/latest/auth.html
