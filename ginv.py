@@ -25,6 +25,17 @@ for project in projects_list:
     print(project)
 """
 
+
+# SQL
+
+inventory['sql'] = {}
+sql = googleapiclient.discovery.build('sqladmin', 'v1beta4')
+list_sql = sql.instances().list(project=project).execute()
+if 'items' in list_sql:
+    inventory['sql'] = list_sql['items']
+
+    
+
 # Compute Engine => marchouille
 
 compute = googleapiclient.discovery.build('compute', 'v1')
