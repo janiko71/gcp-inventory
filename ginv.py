@@ -26,41 +26,62 @@ for project in projects_list:
 """
 
 # Compute Engine => marchouille
-"""
+
 compute = googleapiclient.discovery.build('compute', 'v1')
 
-compute_zones = compute.zones().list(project=project).execute()
-inventory['compute_zones'] = compute_zones
-list_zones = compute_zones['items']
+# Global resources
 
-compute_regions = compute.regions().list(project=project).execute()
-inventory['compute_regions'] = compute_regions
-list_regions = compute_regions['items']
+inventory['snapshots'] = {}
+list_snapshots = compute.snapshots().list(project=project).execute()
+if 'items' in list_snapshots:
+    inventory['snapshots'] = list_snapshots['items']
+
+inventory['firewalls.rules'] = {}
+list_firewalls = compute.firewalls().list(project=project).execute()
+if 'items' in list_firewalls:
+    inventory['firewalls.rules'] = list_firewalls['items']
+
+inventory['compute_zones'] = {}
+list_zones = compute.zones().list(project=project).execute()
+if 'items' in list_zones:
+    inventory['compute_zones'] = list_zones['items']
+
+inventory['compute_regions'] = {}
+list_regions = compute.regions().list(project=project).execute()
+if 'items' in list_regions:
+    inventory['compute_regions'] = list_regions['items']
 
 
 inventory_compute = {}
 inventory_autoscalers = {}
+inventory_disks = {}
 
-for zone in list_zones:
+for zone in list_zones['items']:
     zone_name = zone['name']
     print("{} {:6} {}".format(zone['id'], "(" + zone['status'] + ")", zone['name']))
-    result_compute = compute.instances().list(project=project, zone=zone_name).execute()
-    result_autoscalers = compute.autoscalers().list(project=project, zone=zone_name).execute()
-    inventory_compute[zone_name] = result_compute
-    inventory_autoscalers[zone_name] = result_autoscalers
+    list_compute = compute.instances().list(project=project, zone=zone_name).execute()
+    list_autoscalers = compute.autoscalers().list(project=project, zone=zone_name).execute()
+    list_disks = compute.disks().list(project=project, zone=zone_name).execute()
+    if 'items' in list_compute:
+        inventory_compute[zone_name] = list_compute
+    if 'items' in list_autoscalers:
+        inventory_autoscalers[zone_name] = list_autoscalers
+    if 'items' in list_disks:
+        inventory_disks[zone_name] = list_disks
 
 inventory_addresses = {}
 
-for region in list_regions:
+for region in list_regions['items']:
     region_name = region['name']
     print("{} {:6} {}".format(region['id'], "(" + region['status'] + ")", region['name']))
-    result_addresses = compute.addresses().list(project=project, region=region_name).execute()
-    inventory_addresses[region_name] = result_addresses
+    list_addresses = compute.addresses().list(project=project, region=region_name).execute()
+    if 'items' in list_addresses:
+        inventory_addresses[region_name] = list_addresses
 
 inventory['compute'] = inventory_compute
-inventory['autoscaler'] = inventory_autoscalers
+inventory['autoscalers'] = inventory_autoscalers
 inventory['addresses'] = inventory_addresses
-"""
+inventory['disks'] = inventory_disks
 
 
 # Apps
