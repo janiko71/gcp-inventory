@@ -25,6 +25,7 @@ https://googleapis.dev/python/cloudasset/latest/index.html
 
 ## Pagination
 https://github.com/googleapis/google-api-python-client/blob/master/docs/pagination.md
+Looks like it's useless with json return format :S
 
 ## Authentication
 https://googleapis.dev/python/google-api-core/latest/auth.html

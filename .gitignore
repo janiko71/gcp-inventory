@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 launch.json
 settings.json
+test.py
 
 # C extensions
 *.so
