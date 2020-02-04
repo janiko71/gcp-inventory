@@ -1,6 +1,10 @@
 import io, os, sys, time
 import json
 
+import config
+import globals
+from gcpthread import GCPThread
+
 #from google.auth import compute_engine
 #auth = compute_engine.Credentials()
 
@@ -12,11 +16,12 @@ from googleapiclient import errors
 #import google.auth
 #credentials, project = google.auth.default()
 
-MAX_RESULTS = 1000
 
-project = "secu-si"
 
-inventory = {}
+
+config.global_inventory = {}
+
+project = config.project
 
 t0 = time.time()
 
@@ -30,83 +35,37 @@ for project in projects_list:
 """
 
 
-#client.__getattribute__(detail_function)(**param).get(detail_get_key)
-
-#------------------------------------------------------------------------------------------
-def inventory_without_pagination(service, fn_name, params, getter = 'items'):
-#------------------------------------------------------------------------------------------
-
-    return inventory_with_pagination(service, fn_name, params, getter, max_results = None)
-
-#------------------------------------------------------------------------------------------
-def inventory_with_pagination(service, fn_name, params, getter = 'items', max_results = MAX_RESULTS):
-#------------------------------------------------------------------------------------------
-
-    #service = googleapiclient.discovery.build(service, version)
-    print(fn_name, params)
-
-    inventory = []
-    cont = True
-    nextPageToken = None
-
-    if 'maxResults' not in params and max_results != None:
-        params['maxResults'] = max_results
-
-    if type(fn_name) == str:
-        inventory_function = service.__getattribute__(fn_name)()
-    else:
-        inventory_function = service
-        for fn in fn_name:
-            inventory_function = inventory_function.__getattribute__(fn)()
-
-    while cont:
-        cont = False
-        params['pageToken'] = nextPageToken
-        results_list = inventory_function.list(**params).execute()
-        if getter in results_list:
-                inventory = inventory + results_list[getter]
-        if 'nextPageToken' in results_list:
-            nextPageToken = results_list['nextPageToken']    
-            cont = True
-
-    return inventory
-
 """
 compute_service = googleapiclient.discovery.build('compute', 'v1')
-inventory['firewalls.rules'] = inventory_with_pagination(compute_service, "firewalls", {'project': project})
+inventory['firewalls.rules'] = globals.inventory_with_pagination(compute_service, "firewalls", {'project': project})
 exit(0)
 
 """
 
 # SQL
 
-def SQL_inventory():
-
-    global inventory
+def SQL_inventory(project):
 
     service_sql = googleapiclient.discovery.build('sqladmin', 'v1beta4')
-    inventory['sql'] = inventory_with_pagination(service_sql, "instances", {'project': project})
+    config.global_inventory['sql'] = globals.inventory_with_pagination(service_sql, "instances", {'project': project})
 
 
 # Compute Engine => marchouille
 
-def compute_inventory():
-
-    global inventory
+def compute_inventory(project):
 
     service_compute = googleapiclient.discovery.build('compute', 'v1')
 
     # Global resources
 
-    compute_services_global = ["regions", "zones", "snapshots", "firewalls", "backendBuckets", "backendServices", "externalVpnGateways", 
+    compute_services_global = ["snapshots", "firewalls", "backendBuckets", "backendServices", "externalVpnGateways", 
                 "globalAddresses", "globalForwardingRules", "globalOperations", "interconnects", "networks",
                 "routes"]
-    compute_informational_services_global = ["interconnectLocations"]   
 
     #compute_services_global = ["regions", "zones"]
 
     for service_name in compute_services_global:
-        inventory[service_name] = inventory_with_pagination(service_compute, service_name, {'project': project})
+        config.global_inventory[service_name] = globals.inventory_with_pagination(service_compute, service_name, {'project': project})
 
     compute_services_by_regions = ["addresses", "forwardingRules", "interconnectAttachments", "regionAutoscalers",
                 "regionBackendServices", "regionDisks", "regionOperations", "routers", "subnetworks",
@@ -120,8 +79,8 @@ def compute_inventory():
 
     # Special lists
 
-    list_zones = inventory['zones']
-    list_regions = inventory['regions']
+    list_zones = config.list_zones
+    list_regions = config.list_regions
 
     #for zone in list_zones:
     #    zone_name = zone['name']
@@ -135,29 +94,29 @@ def compute_inventory():
         regional_inventory = []
         for region in list_regions:
             region_name = region['name']
-            regional_inventory = regional_inventory +  inventory_with_pagination(service_compute, regional_service, {'project': project, 'region': region_name})
-        inventory[regional_service] = regional_inventory
+            regional_inventory = regional_inventory +  globals.inventory_with_pagination(service_compute, regional_service, {'project': project, 'region': region_name})
+        config.global_inventory[regional_service] = regional_inventory
 
 
     for zonal_service in compute_services_by_zones:
         zonal_inventory = []
         for zone in list_zones:
             zone_name = zone['name']
-            zonal_inventory = zonal_inventory +  inventory_with_pagination(service_compute, zonal_service, {'project': project, 'zone': zone_name})
-        inventory[zonal_service] = zonal_inventory
+            zonal_inventory = zonal_inventory +  globals.inventory_with_pagination(service_compute, zonal_service, {'project': project, 'zone': zone_name})
+        config.global_inventory[zonal_service] = zonal_inventory
 
 
 # Apps
 # Special API: you need an additional API call for describing each App
 
-def appengine_inventory():
+def appengine_inventory(project):
 
     global inventory
     service_appengine = googleapiclient.discovery.build('appengine', 'v1')
 
     inventory_appengine = {}
 
-    apps_list =  inventory_without_pagination(service_appengine, ['apps', 'services'], {'appsId': project}, getter = 'services')
+    apps_list =  globals.inventory_without_pagination(service_appengine, ['apps', 'services'], {'appsId': project}, getter = 'services')
 
     for app in apps_list:
         app_desc = service_appengine.apps().get(appsId="secu-si").execute()
@@ -166,7 +125,7 @@ def appengine_inventory():
         inventory_appengine[app['id']]['service'] = app
         inventory_appengine[app['id']]['desc'] = app_desc
         
-    inventory['apps_list'] = inventory_appengine
+    config.global_inventory['apps_list'] = inventory_appengine
 
 # Services
 
@@ -175,7 +134,7 @@ def appengine_inventory():
 # https://cloud.google.com/functions/docs/apis
 # https://cloud.google.com/functions/docs/reference/rest/
 
-def functions_inventory():
+def functions_inventory(project):
 
     global inventory
 
@@ -183,43 +142,72 @@ def functions_inventory():
 
     list_functions = {}
 
-    functions_locations = inventory_without_pagination(service_functions, ['projects', 'locations'], 
+    functions_locations = globals.inventory_without_pagination(service_functions, ['projects', 'locations'], 
                                     {'name': "projects/" + project}, getter='locations')
 
     for loc in functions_locations:
 
         loc_name = loc['name']
-        list_functions[loc_name] = inventory_without_pagination(service_functions, ['projects', 'locations', 'functions'], 
+        list_functions[loc_name] = globals.inventory_without_pagination(service_functions, ['projects', 'locations', 'functions'], 
                                         {'parent': loc_name}, getter = 'functions')
 
-    inventory['functions'] = list_functions
+    config.global_inventory['functions'] = list_functions
 
 
 # Bigtable
 
-def bigtable_inventory():
+def bigtable_inventory(project):
 
     global inventory
 
     service_bigtable = googleapiclient.discovery.build('bigtableadmin', 'v2')
 
-    inventory['bigtable'] = {}
+    config.global_inventory['bigtable'] = {}
 
-    inventory['bigtable'] = inventory_without_pagination(service_bigtable, ['projects', 'instances'], 
+    config.global_inventory['bigtable'] = globals.inventory_without_pagination(service_bigtable, ['projects', 'instances'], 
                                                  {'parent': "projects/" + project}, getter='instances')
 
-    for instance in inventory['bigtable']:
+    for instance in config.global_inventory['bigtable']:
         instance_name = instance['name']
-        list_clusters = inventory_without_pagination(service_bigtable, ['projects', 'instances', 'clusters'], 
+        list_clusters = globals.inventory_without_pagination(service_bigtable, ['projects', 'instances', 'clusters'], 
                                                  {'parent': instance_name}, getter='clusters')
-        instance['clusters'] = list_clusters
+        config.global_inventory['clusters'] = list_clusters
+
+#
+# Let's rock'n roll
+#
+
+thread_list = []
+
+thread_list.append(GCPThread("sql", SQL_inventory, project))
+thread_list.append(GCPThread("compute", compute_inventory, project))
+thread_list.append(GCPThread("appengine", appengine_inventory, project))
+thread_list.append(GCPThread("functions", functions_inventory, project))
+thread_list.append(GCPThread("bigtable", bigtable_inventory, project))
+
+
+# -------------------------------------------------------------------
+#
+#                         Thread management
+#
+# -------------------------------------------------------------------
+
+for th in thread_list:
+    th.start()
+
+for th in thread_list:
+    th.join()
 
 
 
-# Fin finale
+# -------------------------------------------------------------------
+#
+#                        The End
+#
+# -------------------------------------------------------------------
 
 f = open('inv.txt','w')
-f.write(json.JSONEncoder().encode(inventory))
+f.write(json.JSONEncoder().encode(config.global_inventory))
 f.close()  
 
 execution_time = time.time() - t0
