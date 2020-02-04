@@ -195,6 +195,27 @@ def functions_inventory():
     inventory['functions'] = list_functions
 
 
+# Bigtable
+
+def bigtable_inventory():
+
+    global inventory
+
+    service_bigtable = googleapiclient.discovery.build('bigtableadmin', 'v2')
+
+    inventory['bigtable'] = {}
+
+    inventory['bigtable'] = inventory_without_pagination(service_bigtable, ['projects', 'instances'], 
+                                                 {'parent': "projects/" + project}, getter='instances')
+
+    for instance in inventory['bigtable']:
+        instance_name = instance['name']
+        list_clusters = inventory_without_pagination(service_bigtable, ['projects', 'instances', 'clusters'], 
+                                                 {'parent': instance_name}, getter='clusters')
+        instance['clusters'] = list_clusters
+
+
+
 # Fin finale
 
 f = open('inv.txt','w')
