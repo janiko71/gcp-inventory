@@ -34,6 +34,7 @@ def inventory_with_pagination(service, fn_name, params, max_results = MAX_RESULT
 #------------------------------------------------------------------------------------------
 
     #service = googleapiclient.discovery.build(service, version)
+    print(fn_name, params)
 
     inventory = []
     cont = True
@@ -60,7 +61,7 @@ def inventory_with_pagination(service, fn_name, params, max_results = MAX_RESULT
 
     return inventory
 
-
+"""
 compute_service = googleapiclient.discovery.build('compute', 'v1')
 inventory['firewalls.rules'] = inventory_with_pagination(compute_service, "firewalls", {'project': project})
 exit(0)
@@ -69,88 +70,65 @@ exit(0)
 
 # SQL
 
-inventory['sql'] = {}
-sql = googleapiclient.discovery.build('sqladmin', 'v1beta4')
-list_sql = sql.instances().list(project=project).execute()
-if 'items' in list_sql:
-    inventory['sql'] = list_sql['items']
+service_sql = googleapiclient.discovery.build('sqladmin', 'v1beta4')
+inventory['sql''] = inventory_with_pagination(service_sql, "instances", {'project': project})
 
-    
 
 # Compute Engine => marchouille
 
-compute = googleapiclient.discovery.build('compute', 'v1')
+service_compute = googleapiclient.discovery.build('compute', 'v1')
 
 # Global resources
 
-inventory['snapshots'] = {}
-list_snapshots = compute.snapshots().list(project=project).execute()
-if 'items' in list_snapshots:
-    inventory['snapshots'] = list_snapshots['items']
+compute_services_global = ["regions", "zones", "snapshots", "firewalls", "backendBuckets", "backendServices", "externalVpnGateways", 
+            "globalAddresses", "globalForwardingRules", "globalOperations", "interconnects", "networks",
+            "routes"]
+compute_informational_services_global = ["interconnectLocations"]   
 
-inventory['firewalls.rules'] = {}
-list_firewalls = compute.firewalls().list(project=project, maxResults=10, pageToken=None).execute()
-if 'items' in list_firewalls:
-    inventory['firewalls.rules'] = list_firewalls['items']
-if 'nextPageToken' in list_firewalls:
-    nextPageToken = list_firewalls['nextPageToken']    
+#compute_services_global = ["regions", "zones"]
 
-inventory['compute_zones'] = {}
-list_zones = compute.zones().list(project=project).execute()
-if 'items' in list_zones:
-    inventory['compute_zones'] = list_zones['items']
+for service_name in compute_services_global:
+    inventory[service_name] = inventory_with_pagination(service_compute, service_name, {'project': project})
 
-inventory['compute_regions'] = {}
-list_regions = compute.regions().list(project=project).execute()
-if 'items' in list_regions:
-    inventory['compute_regions'] = list_regions['items']
+compute_services_by_regions = ["addresses", "forwardingRules", "interconnectAttachments", "regionAutoscalers",
+            "regionBackendServices", "regionDisks", "regionOperations", "routers", "subnetworks",
+            "vpnGateways", "vpnTunnels"]
+compute_informational_services_by_regions = []            
 
-inventory['backendBuckets'] = {}
-list_backendBuckets = compute.backendBuckets().list(project=project, maxResults=10, pageToken=None).execute()
-if 'items' in list_backendBuckets:
-    inventory['backendBuckets'] = list_backendBuckets
+compute_services_by_zones = ["autoscalers", "disks", "instances", "networkEndpointGroups", "nodeGroups"]
+compute_informational_services_by_zones = ["acceleratorTypes",]
+# Cas particuliers zones
+# https://cloud.google.com/compute/docs/reference/rest/v1/nodeGroups/list
 
-inventory['backendServices'] = {}
-list_backendServices = compute.backendServices().list(project=project, maxResults=10, pageToken=None).execute()
-if 'items' in list_backendServices:
-    inventory['backendServices'] = list_backendServices    
+# Special lists
 
-inventory_compute = {}
-inventory_autoscalers = {}
-inventory_disks = {}
+list_zones = inventory['zones']
+list_regions = inventory['regions']
 
-for zone in list_zones['items']:
-    zone_name = zone['name']
-    print("{} {:6} {}".format(zone['id'], "(" + zone['status'] + ")", zone['name']))
-    list_compute = compute.instances().list(project=project, zone=zone_name).execute()
-    if 'items' in list_compute:
-        inventory_compute[zone_name] = list_compute
-    list_autoscalers = compute.autoscalers().list(project=project, zone=zone_name, maxResults=10, pageToken=None).execute()
-    if 'items' in list_autoscalers:
-        inventory_autoscalers[zone_name] = list_autoscalers
-    list_disks = compute.disks().list(project=project, zone=zone_name, maxResults=10, pageToken=None).execute()
-    if 'items' in list_disks:
-        inventory_disks[zone_name] = list_disks
-    list_disks = compute.disks().list(project=project, zone=zone_name, maxResults=10, pageToken=None).execute()
-    if 'items' in list_disks:
-        inventory_disks[zone_name] = list_disks
+#for zone in list_zones:
+#    zone_name = zone['name']
+#    print("{} {:6} {}".format(zone['id'], "(" + zone['status'] + ")", zone_name))
+
+#for region in list_regions:
+#    region_name = region['name']
+#    print("{} {:6} {}".format(region['id'], "(" + region['status'] + ")", region_name))
+
+for regional_service in compute_services_by_regions:
+    regional_inventory = []
+    for region in list_regions:
+        region_name = region['name']
+        regional_inventory = regional_inventory +  inventory_with_pagination(service_compute, regional_service, {'project': project, 'region': region_name})
+    inventory[regional_service] = regional_inventory
 
 
-inventory_addresses = {}
+for zonal_service in compute_services_by_zones:
+    zonal_inventory = []
+    for zone in list_zones:
+        zone_name = zone['name']
+        zonal_inventory = zonal_inventory +  inventory_with_pagination(service_compute, zonal_service, {'project': project, 'zone': zone_name})
+    inventory[zonal_service] = zonal_inventory
 
-for region in list_regions['items']:
-    region_name = region['name']
-    print("{} {:6} {}".format(region['id'], "(" + region['status'] + ")", region['name']))
-    list_addresses = compute.addresses().list(project=project, region=region_name, maxResults=10, pageToken=None).execute()
-    if 'items' in list_addresses:
-        inventory_addresses[region_name] = list_addresses
-
-inventory['compute'] = inventory_compute
-inventory['autoscalers'] = inventory_autoscalers
-inventory['addresses'] = inventory_addresses
-inventory['disks'] = inventory_disks
-
-
+"""
 # Apps
 
 appengine = googleapiclient.discovery.build('appengine', 'v1')
@@ -174,7 +152,6 @@ inventory['apps_list'] = inventory_appengine
 
 #services = googleapiclient.discovery.build('services', 'v1')
 
-"""
 
 # Functions
 # https://cloud.google.com/functions/docs/apis
@@ -196,7 +173,7 @@ for loc in functions_locations['locations']:
         #for func in list_functions:
         #    print(func)
 inventory['functions'] = list_functions
-
+"""
 
 # Fin finale
 
