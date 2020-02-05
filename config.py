@@ -4,7 +4,7 @@ import json
 import os
 from time import gmtime, strftime
 
-import globals
+import res.functions as func
 
 import googleapiclient
 
@@ -15,6 +15,7 @@ from googleapiclient import errors
 # Environment Variables & File handling & logging
 #
 
+global_inventory = {}
 
 # --- Format for displaying actions
 
@@ -34,7 +35,7 @@ os.makedirs(filepath, exist_ok=True)
 log_filepath    = "./log/"
 os.makedirs(log_filepath, exist_ok=True)
 
-logger          = logging.getLogger("aws-inventory")
+logger          = logging.getLogger("gcp-inventory")
 hdlr            = logging.FileHandler(log_filepath+"inventory.log")
 formatter       = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 
@@ -45,11 +46,6 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr) 
 logger.setLevel(logging.WARNING)
 
-#
-# --- Global inventory, for multithreading purpose
-#
-
-global_inventory = {}
 
 # --- Project
 
@@ -57,17 +53,19 @@ project = "secu-si"
 
 # --- Regions & Zones
 
+info_inventory = {}
+
 compute_informational_services_global = ["regions", "zones", "interconnectLocations"]   
 
 service_compute = googleapiclient.discovery.build('compute', 'v1')
 
 for service_name in compute_informational_services_global:
-    global_inventory[service_name] = globals.inventory_with_pagination(service_compute, service_name, {'project': project})
+    info_inventory[service_name] = func.inventory_with_pagination(service_compute, service_name, {'project': project})
 
 # Special lists
 
-list_zones = global_inventory['zones']
-list_regions = global_inventory['regions']
+list_zones = info_inventory['zones']
+list_regions = info_inventory['regions']
 
 
 # --- Counters

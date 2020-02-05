@@ -1,8 +1,6 @@
 import io, os, sys, time
 import json
 
-import config
-
 import googleapiclient
 
 from googleapiclient import discovery
@@ -42,7 +40,8 @@ def inventory_with_pagination(service, fn_name, params, getter = 'items', max_re
 
     while cont:
         cont = False
-        params['pageToken'] = nextPageToken
+        if max_results != None:
+            params['pageToken'] = nextPageToken
         results_list = inventory_function.list(**params).execute()
         if getter in results_list:
                 inventory = inventory + results_list[getter]

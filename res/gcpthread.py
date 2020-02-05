@@ -2,6 +2,7 @@ import sys
 from threading import Thread
 import config
 
+
 # =======================================================================================================================
 #
 #   Class created for (simple) multithreading
