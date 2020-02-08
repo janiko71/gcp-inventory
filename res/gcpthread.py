@@ -24,7 +24,9 @@ class GCPThread(Thread):
         """
             Thread Class initialization.  
 
-            :param gcp_inventory_service: name of GCP inventoryservice
+            :param thread_name: name of GCP inventoryservice
+            :type thread_name: string
+            :param gcp_inventory_service: function used to gather inventory
             :type gcp_inventory_service: function object
             :param project_id: targetted project 
             :type project_id: string
@@ -45,5 +47,6 @@ class GCPThread(Thread):
         """
         
         config.global_inventory[self.thread_name] = self.gcp_inventory_service(self.project_id)
+        pass
 
 

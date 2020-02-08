@@ -5,4 +5,4 @@ f_cred = "C:\\Users\\Janiko\\OneDrive\\Dev\\gcp-inventory\\cred\\secu-si-175c9ca
 credentials = service_account.Credentials.from_service_account_file(f_cred)
 
 #gac = googleapiclient.discovery.build('sqladmin', 'v1beta4', credentials=credentials)
-svc = googleapiclient.discovery.build('bigtableadmin', 'v2', credentials=credentials)
+svc = googleapiclient.discovery.build('accesscontextmanager', 'v1', credentials=credentials)

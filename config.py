@@ -4,18 +4,18 @@ import json
 import os
 from time import gmtime, strftime
 
-import res.functions as func
-
 import googleapiclient
 
 from googleapiclient import discovery
 from googleapiclient import errors
 
+import res.functions as func
+
 #
 # Environment Variables & File handling & logging
 #
 
-global_inventory = {}
+#global global_inventory
 
 # --- Format for displaying actions
 
@@ -73,4 +73,11 @@ list_regions = info_inventory['regions']
 nb_svc = 0
 nb_units_todo = 0
 nb_units_done = 0
+
+
+#
+# --- Global inventory, for multithreading purpose
+#
+global_inventory = {}
+
 
