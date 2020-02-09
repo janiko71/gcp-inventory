@@ -15,7 +15,7 @@ See documentatoion on https://pypi.org/project/google-cloud-asset/
 
 Else you'll have to install all needed packages ```pip install google-cloud-storage``` ??
 
-All APIs must be enabled for the services you want information on. And the service account needs to have all the needed authorizations (viewer on services you are inventoring).
+**All APIs** for the services on which you want information **must be enabled**, as well as Cloud Resources Manager API. And the service account you'll use needs to have all the needed **authorizations** (viewer on all the services you are inventoring on all projects you want to inventory).
 
 ### Homepage and API docs
 

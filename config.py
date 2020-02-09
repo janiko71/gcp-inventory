@@ -9,7 +9,7 @@ import googleapiclient
 from googleapiclient import discovery
 from googleapiclient import errors
 
-import res.functions as func
+import res.meta as meta
 
 #
 # Environment Variables & File handling & logging
@@ -47,12 +47,13 @@ logger.addHandler(hdlr)
 logger.setLevel(logging.WARNING)
 
 
-# --- Project
+# --- Projects
 
-project = "secu-si"
+projects_list = meta.projects_list()
+
 
 # --- Regions & Zones
-
+"""
 info_inventory = {}
 
 compute_informational_services_global = ["regions", "zones", "interconnectLocations"]   
@@ -60,13 +61,13 @@ compute_informational_services_global = ["regions", "zones", "interconnectLocati
 service_compute = googleapiclient.discovery.build('compute', 'v1')
 
 for service_name in compute_informational_services_global:
-    info_inventory[service_name] = func.inventory_with_pagination(service_compute, service_name, {'project': project})
+    info_inventory[service_name] = meta.inventory_with_pagination(service_compute, service_name, {'project': project})
 
 # Special lists
 
 list_zones = info_inventory['zones']
 list_regions = info_inventory['regions']
-
+"""
 
 # --- Counters
 
@@ -78,6 +79,9 @@ nb_units_done = 0
 #
 # --- Global inventory, for multithreading purpose
 #
+
 global_inventory = {}
+
+
 
 

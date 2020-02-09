@@ -22,7 +22,7 @@ def inventory_with_pagination(service, fn_name, params, getter = 'items', max_re
 #------------------------------------------------------------------------------------------
 
     #service = googleapiclient.discovery.build(service, version)
-    print(fn_name, params)
+    #print(fn_name, params)
 
     inventory = []
     cont = True
@@ -50,4 +50,17 @@ def inventory_with_pagination(service, fn_name, params, getter = 'items', max_re
             cont = True
 
     return inventory
+
+
+#------------------------------------------------------------------------------------------
+def projects_list():
+#------------------------------------------------------------------------------------------
+
+    # https://cloud.google.com/resource-manager/reference/rest/v1/projects
+    
+    project_service = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
+
+    list = inventory_without_pagination(project_service, "projects", {}, getter = 'projects')
+
+    return list
 

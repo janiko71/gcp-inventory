@@ -7,13 +7,8 @@ from googleapiclient import discovery
 from googleapiclient import errors
 
 import config
-import res.functions as func
+import res.meta as meta
 from res.gcpthread import GCPThread
-
-
-global global_inventory
-
-project = config.project
 
 
 
@@ -50,7 +45,7 @@ def compute_inventory_global(project):
 
     for service_name in compute_services_global:
 
-        result[service_name] = func.inventory_with_pagination(service_compute, service_name, {'project': project})
+        result[service_name] = meta.inventory_with_pagination(service_compute, service_name, {'project': project})
 
     return result
 
@@ -98,7 +93,7 @@ def compute_inventory_regional(project):
         for region in list_regions:
 
             region_name = region['name']
-            regional_inventory = regional_inventory +  func.inventory_with_pagination(service_compute, regional_service, {'project': project, 'region': region_name})
+            regional_inventory = regional_inventory +  meta.inventory_with_pagination(service_compute, regional_service, {'project': project, 'region': region_name})
 
         result[regional_service] = regional_inventory
 
@@ -147,7 +142,7 @@ def compute_inventory_zonal(project):
         for zone in list_zones:
             
             zone_name = zone['name']
-            zonal_inventory = zonal_inventory +  func.inventory_with_pagination(service_compute, zonal_service, {'project': project, 'zone': zone_name})
+            zonal_inventory = zonal_inventory +  meta.inventory_with_pagination(service_compute, zonal_service, {'project': project, 'zone': zone_name})
 
         result[zonal_service] = zonal_inventory
 
@@ -183,7 +178,7 @@ def appengine_inventory(project):
 
     # App Engine services list
 
-    apps_list =  func.inventory_without_pagination(service_appengine, ['apps', 'services'], {'appsId': project}, getter = 'services')
+    apps_list =  meta.inventory_without_pagination(service_appengine, ['apps', 'services'], {'appsId': project}, getter = 'services')
 
     # For each App, we get some further information
 
@@ -227,7 +222,7 @@ def functions_inventory(project):
 
     # Function locations list
 
-    functions_locations = func.inventory_without_pagination(service_functions, ['projects', 'locations'], 
+    functions_locations = meta.inventory_without_pagination(service_functions, ['projects', 'locations'], 
                                     {'name': "projects/" + project}, getter='locations')
 
     # For each location, we list the functions                                    
@@ -235,7 +230,7 @@ def functions_inventory(project):
     for loc in functions_locations:
 
         loc_name = loc['name']
-        result_list = func.inventory_without_pagination(service_functions, ['projects', 'locations', 'functions'], 
+        result_list = meta.inventory_without_pagination(service_functions, ['projects', 'locations', 'functions'], 
                                         {'parent': loc_name}, getter = 'functions')
         if len(result_list) != 0:
             list_functions[loc_name] = result_list
@@ -272,7 +267,7 @@ def cloud_gpu_inventory(project):
 
     # GPU locations list
 
-    cloud_gpu_locations = func.inventory_without_pagination(service_cloud_gpu, ['projects', 'locations'], 
+    cloud_gpu_locations = meta.inventory_without_pagination(service_cloud_gpu, ['projects', 'locations'], 
                                     {'name': "projects/" + project}, getter='locations')
 
     # For each location, we list the functions // Not sure it's without pagination, cf API                               
@@ -280,7 +275,7 @@ def cloud_gpu_inventory(project):
     for loc in cloud_gpu_locations:
 
         loc_name = loc['name']
-        result_list = func.inventory_without_pagination(service_cloud_gpu, ['projects', 'locations', 'nodes'], 
+        result_list = meta.inventory_without_pagination(service_cloud_gpu, ['projects', 'locations', 'nodes'], 
                                         {'parent': loc_name}, getter = 'nodes')
         if len(result_list) != 0:
             list_cloud_gpu[loc_name] = result_list
