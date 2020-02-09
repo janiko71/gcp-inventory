@@ -43,7 +43,7 @@ for project in projects_list:
 # -------------------------------------------------------------------
 
 thread_list = []
-
+"""
 thread_list.append(GCPThread("sql", storage.SQL_inventory, project))
 thread_list.append(GCPThread("appengine", compute.appengine_inventory, project))
 thread_list.append(GCPThread("compute", compute.compute_inventory_global, project))
@@ -52,6 +52,8 @@ thread_list.append(GCPThread("compute", compute.compute_inventory_zonal, project
 thread_list.append(GCPThread("functions", compute.functions_inventory, project))
 thread_list.append(GCPThread("bigtable", storage.bigtable_inventory, project))
 thread_list.append(GCPThread("filestore", storage.filestore_inventory, project))
+"""
+thread_list.append(GCPThread("tpu", compute.cloud_gpu_inventory, project))
 
 # -------------------------------------------------------------------
 #

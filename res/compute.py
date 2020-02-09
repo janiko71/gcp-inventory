@@ -245,3 +245,51 @@ def functions_inventory(project):
     return list_functions
 
 
+
+# ================================================================================
+#
+#  Service : Cloud GPU
+#
+# ================================================================================
+# 
+#  List GCP assets for functions
+#
+#  https://cloud.google.com/tpu/docs/reference
+#  https://cloud.google.com/tpu/docs/reference/rest
+#
+
+# --------------------------------------------------
+def cloud_gpu_inventory(project):
+# --------------------------------------------------
+    
+    # Connection to the service API
+
+    service_cloud_gpu = googleapiclient.discovery.build('tpu', 'v1')
+
+    # Inventory init
+
+    list_cloud_gpu = {}
+
+    # GPU locations list
+
+    cloud_gpu_locations = func.inventory_without_pagination(service_cloud_gpu, ['projects', 'locations'], 
+                                    {'name': "projects/" + project}, getter='locations')
+
+    # For each location, we list the functions // Not sure it's without pagination, cf API                               
+
+    for loc in cloud_gpu_locations:
+
+        loc_name = loc['name']
+        result_list = func.inventory_without_pagination(service_cloud_gpu, ['projects', 'locations', 'nodes'], 
+                                        {'parent': loc_name}, getter = 'nodes')
+        if len(result_list) != 0:
+            list_cloud_gpu[loc_name] = result_list
+
+    # Sending results
+
+    return list_cloud_gpu
+
+
+
+
+
